@@ -1,0 +1,74 @@
+#@title Definitions
+
+BATCH_SIZE = 4
+Z_SIZE = 512
+TOTAL_STEPS = 512
+BAR_SECONDS = 2.0
+CHORD_DEPTH = 49
+
+SAMPLE_RATE = 44100
+SF2_PATH = '/content/1.sf2'
+
+
+
+# Play sequence using SoundFont.
+# Play sequence using SoundFont.
+def play(note_sequence):
+    # Convertir la secuencia a MIDI
+    midi_filename = 'no-training-model0.mid'
+    note_seq.sequence_proto_to_midi_file(note_sequence, midi_filename)
+    # Convertir MIDI a audio usando FluidSynth
+    fs = FluidSynth(SF2_PATH)  # Ruta a una SoundFont válida
+    fs.midi_to_audio(midi_filename, 'output.mid')
+
+
+
+# Spherical linear interpolation.
+def slerp(p0, p1, t):
+  """Spherical linear interpolation."""
+  omega = np.arccos(np.dot(np.squeeze(p0/np.linalg.norm(p0)), np.squeeze(p1/np.linalg.norm(p1))))
+  so = np.sin(omega)
+  return np.sin((1.0-t)*omega) / so * p0 + np.sin(t*omega)/so * p1
+
+
+# Download sequence.
+def download(note_sequence, filename):
+    midi_filename = f'training-model-v2.mid'
+    note_seq.sequence_proto_to_midi_file(note_sequence, midi_filename)
+   
+  
+
+# Chord encoding tensor.
+def chord_encoding(chord):
+  index = mm.TriadChordOneHotEncoding().encode_event(chord)
+  c = np.zeros([TOTAL_STEPS, CHORD_DEPTH])
+  c[0,0] = 1.0
+  c[1:,index] = 1.0
+  return c
+
+
+
+
+# Trim sequences to exactly one bar.
+def trim_sequences(seqs, num_seconds=BAR_SECONDS):
+  for i in range(len(seqs)):
+    seqs[i] = mm.extract_subsequence(seqs[i], 0.0, num_seconds)
+    seqs[i].total_time = num_seconds
+
+
+
+
+# Consolidate instrument numbers by MIDI program.
+def fix_instruments_for_concatenation(note_sequences):
+  instruments = {}
+  for i in range(len(note_sequences)):
+    for note in note_sequences[i].notes:
+      if not note.is_drum:
+        if note.program not in instruments:
+          if len(instruments) >= 8:
+            instruments[note.program] = len(instruments) + 2
+          else:
+            instruments[note.program] = len(instruments) + 1
+        note.instrument = instruments[note.program]
+      else:
+        note.instrument = 9
