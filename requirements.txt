@@ -1,0 +1,6 @@
+note_seq
+tensorflow
+numpy
+magenta.music
+FluidSynth
+bokeh.plotting
