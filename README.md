@@ -20,7 +20,7 @@ Puedes instalar las dependencias necesarias ejecutando el siguiente comando:
 ```bash
 pip install -r requirements.txt
 ```
-##Créditos
+## Créditos
 
 Este proyecto fue desarrollado por Orinson Moreno, Juan Evans y Keren Gonzalez.
 
