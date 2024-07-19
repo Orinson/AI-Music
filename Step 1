@@ -1,0 +1,39 @@
+!apt-get update -qq && apt-get install -qq libfluidsynth2 build-essential libasound2-dev libjack-dev fluidsynth
+!pip install -qU magenta pyfluidsynth pretty_midi note_seq tensorflow bokeh midi2audio
+
+import os
+import note_seq
+import tensorflow as tf
+import numpy as np
+import magenta.music as mm
+from midi2audio import FluidSynth
+import bokeh.plotting as bplt
+
+
+from magenta.models.music_vae import configs
+from magenta.music.sequences_lib import concatenate_sequences
+from magenta.models.music_vae.trained_model import TrainedModel
+import ctypes.util
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+orig_ctypes_util_find_library = ctypes.util.find_library
+def proxy_find_library(lib):
+  if lib == 'fluidsynth':
+    return 'libfluidsynth.so.1'
+  else:
+    return orig_ctypes_util_find_library(lib)
+ctypes.util.find_library = proxy_find_library
+
+# Limitar el uso de memoria GPU
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+            tf.config.experimental.set_virtual_device_configuration(
+                gpu,
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])  # Ajusta este valor según sea necesario
+    except RuntimeError as e:
+        print(e)
